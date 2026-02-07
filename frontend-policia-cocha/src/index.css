@@ -1,0 +1,39 @@
+/* AL PRINCIPIO: Importar fuente Inter (se ve más profesional) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* CAMBIOS GLOBALES */
+body {
+  font-family: 'Inter', sans-serif; /* Aplicar fuente nueva */
+  background-color: #f3f4f6; /* Gris muy suave, no blanco puro */
+}
+
+/* REGLAS DE IMPRESIÓN (Para que el PDF salga limpio) */
+@media print {
+  /* Ocultar sidebar y botones */
+  aside, button, select, .no-print {
+    display: none !important;
+  }
+  
+  /* Ajustar contenido */
+  main {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  body {
+    background: white;
+    font-size: 12pt;
+  }
+
+  /* Quitar sombras para ahorrar tinta */
+  .shadow-lg, .shadow-sm {
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+  }
+}

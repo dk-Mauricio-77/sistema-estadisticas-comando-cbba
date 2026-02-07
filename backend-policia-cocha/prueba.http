@@ -1,0 +1,30 @@
+### PRUEBA 1. Guardar Formulario (POST)
+POST http://localhost:3001/api/formularios/transito
+Content-Type: application/json
+
+{
+  "incidente": {
+    "codigo_caso": "TEST-1212",
+    "fecha_hora": "2025-12-05T14:30:00",
+    "gps_latitud": -17.3935,
+    "gps_longitud": -66.1570,
+    "zona": "Av. Blanco Galindo",
+    "tipo_hecho": "ATROPELLO"
+  },
+  "protagonista": {
+    "conductor_nombre": "Carlos Prueba",
+    "placa_vehiculo": "4444-ABC",
+    "soat": true,
+    "grado_alcoholico": 0.5,
+    "tipo_vehiculo": "CAMIONETA"
+  },
+  "estadisticas": {
+    "rango_edad": "18-30",
+    "sexo": "M",
+    "condicion": "HERIDO",
+    "cantidad": 1
+  }
+}
+
+### PRUEBA 2: Obtener Dashboard (GET)
+GET http://localhost:3001/api/analitica/dashboard
