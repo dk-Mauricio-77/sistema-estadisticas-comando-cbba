@@ -8,6 +8,7 @@ const rutasTransito = require('./routes/transito');
 const rutasDashboard = require('./routes/dashboard');
 const rutasUsuarios = require('./routes/usuarios');
 const rutasRecepcion = require('./routes/recepcion');
+const rutasIncidentes = require('./routes/incidentes');
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -30,6 +31,7 @@ app.use('/api/analitica/dashboard', rutasDashboard);
 app.use('/api/analitica/mapa', rutasMapa);
 app.use('/api/usuarios', rutasUsuarios);
 app.use('/api/recepcion', rutasRecepcion);
+app.use('/api/incidentes', rutasIncidentes);
 
 app.get('/', (req, res) => {
     res.send('API Policia Cochabamba Funcionando');
