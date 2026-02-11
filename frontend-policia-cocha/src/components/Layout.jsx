@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { LayoutDashboard, FileText, Settings, Map, LogOut } from 'lucide-react';
+import { HiDocumentText } from 'react-icons/hi';
 import logoDashboard from '../assets/logo-dashboard.png';
 
 /**
@@ -35,6 +36,11 @@ const Layout = ({ onLogout }) => {
           <Link to="/recepcion" className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${isActive('/recepcion')}`}>
             <FileText size={20} />
             <span>Recepción de Formularios</span>
+          </Link>
+
+          <Link to="/carga-datos" className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${isActive('/carga-datos')}`}>
+            <HiDocumentText size={20} />
+            <span>Carga de Datos</span>
           </Link>
 
           <Link to="/mapa" className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${isActive('/mapa')}`}>
