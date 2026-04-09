@@ -1,4 +1,4 @@
--- Migración 003: Crear tabla incidentes con estructura híbrida (relacional + JSONB)
+-- Script para crear la tabla incidentes con estructura híbrida (relacional + JSONB)
 -- Ejecutar este script en pgAdmin o psql
 
 -- Crear la tabla incidentes si no existe

@@ -6,6 +6,41 @@ const bcrypt = require('bcrypt');
 // GET /api/usuarios - Obtener todos los usuarios
 router.get('/', async (req, res) => {
     try {
+        // Verificación flexible de rol administrador.
+        // Se intenta obtener el rol desde:
+        // - req.user.rol / req.user.role (si existe middleware de autenticación)
+        // - cabeceras personalizadas: x-user-role / x-rol
+        const rolOrigen =
+            (req.user && (req.user.rol || req.user.role)) ||
+            req.headers['x-user-role'] ||
+            req.headers['x-rol'];
+
+        if (rolOrigen) {
+            const rolNormalizado = String(rolOrigen)
+                .trim()
+                .toLowerCase()
+                .replace(/\s+/g, '_');
+
+            const esAdmin =
+                rolNormalizado === 'admin' ||
+                rolNormalizado === 'administrador' ||
+                rolNormalizado === 'admin_role' ||
+                rolNormalizado === 'adminrole';
+
+            if (!esAdmin) {
+                return res.status(403).json({
+                    error: 'Acceso denegado: se requiere rol administrador para listar usuarios'
+                });
+            }
+        }
+
+        // Por defecto: devolver solo usuarios activos para que un usuario "eliminado" (soft delete)
+        // desaparezca de la lista visual.
+        // Si se requiere ver también inactivos: usar ?incluir_inactivos=1
+        const incluirInactivos =
+            req.query.incluir_inactivos === '1' ||
+            req.query.incluir_inactivos === 'true';
+
         const query = `
             SELECT 
                 id,
@@ -17,9 +52,10 @@ router.get('/', async (req, res) => {
                 ultimo_acceso,
                 created_at
             FROM usuarios
+            WHERE ($1::boolean = true) OR (estado = 'activo')
             ORDER BY created_at DESC
         `;
-        const result = await pool.query(query);
+        const result = await pool.query(query, [incluirInactivos]);
         res.json(result.rows);
     } catch (error) {
         console.error('Error al obtener usuarios:', error);

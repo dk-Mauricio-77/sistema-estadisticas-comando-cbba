@@ -36,8 +36,23 @@ const Dashboard = () => {
     </div>
   );
 
+  // Manejar caso cuando no hay datos
+  if (!data) {
+    return (
+      <div className="flex items-center justify-center h-full min-h-screen bg-gray-100">
+        <div className="text-center">
+          <p className="text-gray-500">No se pudieron cargar los datos del dashboard</p>
+        </div>
+      </div>
+    );
+  }
+
   const { kpis, graficos } = data;
   const COLORS = ['#006847', '#F59E0B', '#3B82F6', '#EF4444'];
+
+  // Asegurar que los gráficos tengan datos válidos
+  const porTipo = graficos?.por_tipo || [{ tipo_hecho: 'Sin datos', cantidad: 0 }];
+  const porZona = graficos?.por_zona || [{ zona: 'Sin datos', cantidad: 0 }];
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
@@ -78,22 +93,28 @@ const Dashboard = () => {
       </header>
 
       {/* Tarjetas de indicadores clave de rendimiento (KPIs) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <KpiCard 
           title="TOTAL INCIDENTES" 
-          value={kpis.total_incidentes} 
+          value={kpis?.total_incidentes || 0} 
           icon={<AlertTriangle className="text-white" size={24} />} 
           color="bg-gradient-to-br from-blue-500 to-blue-600"
         />
         <KpiCard 
-          title="CASOS RESUELTOS" 
-          value={kpis.casos_resueltos} 
-          icon={<CheckCircle className="text-white" size={24} />} 
-          color="bg-gradient-to-br from-emerald-500 to-emerald-600"
+          title="TOTAL HERIDOS" 
+          value={kpis?.total_heridos || 0} 
+          icon={<AlertTriangle className="text-white" size={24} />} 
+          color="bg-gradient-to-br from-orange-500 to-orange-600"
+        />
+        <KpiCard 
+          title="TOTAL MUERTOS" 
+          value={kpis?.total_muertos || 0} 
+          icon={<AlertTriangle className="text-white" size={24} />} 
+          color="bg-gradient-to-br from-red-500 to-red-600"
         />
         <KpiCard 
           title="EFICACIA" 
-          value={kpis.eficacia} 
+          value={kpis?.eficacia || '0%'} 
           icon={<Activity className="text-white" size={24} />} 
           color="bg-gradient-to-br from-violet-500 to-violet-600"
         />
@@ -105,15 +126,33 @@ const Dashboard = () => {
         <div className="bg-white p-6 rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100">
           <h3 className="text-lg font-bold text-gray-800 mb-6 border-l-4 border-policia-green pl-3">Incidentes por Zona</h3>
           <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={graficos.por_zona}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
-                <XAxis dataKey="zona" axisLine={false} tickLine={false} dy={10} fontSize={11} />
-                <YAxis axisLine={false} tickLine={false} fontSize={11} allowDecimals={false} />
-                <Tooltip cursor={{ fill: '#f3f4f6' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}/>
-                <Bar dataKey="cantidad" fill="#006847" radius={[4, 4, 0, 0]} barSize={40} />
-              </BarChart>
-            </ResponsiveContainer>
+            {porZona.length > 0 && porZona[0].cantidad > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={porZona}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
+                  <XAxis 
+                    dataKey="zona" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    dy={10} 
+                    fontSize={11}
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
+                  />
+                  <YAxis axisLine={false} tickLine={false} fontSize={11} allowDecimals={false} />
+                  <Tooltip 
+                    cursor={{ fill: '#f3f4f6' }} 
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
+                  />
+                  <Bar dataKey="cantidad" fill="#006847" radius={[4, 4, 0, 0]} barSize={40} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-400">
+                <p>No hay datos disponibles para mostrar</p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -121,25 +160,31 @@ const Dashboard = () => {
         <div className="bg-white p-6 rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100">
           <h3 className="text-lg font-bold text-gray-800 mb-6 border-l-4 border-blue-500 pl-3">Distribución por Tipo</h3>
           <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie 
-                  data={graficos.por_tipo} 
-                  dataKey="cantidad" 
-                  nameKey="tipo_hecho" 
-                  cx="50%" cy="50%" 
-                  outerRadius={100} 
-                  innerRadius={60}
-                  paddingAngle={5}
-                >
-                  {graficos.por_tipo.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} />
-                <Legend verticalAlign="bottom" height={36} iconType="circle" />
-              </PieChart>
-            </ResponsiveContainer>
+            {porTipo.length > 0 && porTipo[0].cantidad > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie 
+                    data={porTipo} 
+                    dataKey="cantidad" 
+                    nameKey="tipo_hecho" 
+                    cx="50%" cy="50%" 
+                    outerRadius={100} 
+                    innerRadius={60}
+                    paddingAngle={5}
+                  >
+                    {porTipo.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} />
+                  <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-400">
+                <p>No hay datos disponibles para mostrar</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

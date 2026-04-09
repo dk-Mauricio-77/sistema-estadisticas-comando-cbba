@@ -62,7 +62,7 @@ const MapPicker = ({ onSelect, onClose, initialLat = -17.3935, initialLng = -66.
             >
               <TileLayer
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution='&copy; OpenStreetMap contributors'
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               />
               <MapClickHandler onMapClick={handleMapClick} />
               <Marker position={position} />

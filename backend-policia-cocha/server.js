@@ -3,12 +3,13 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 
-// Importamos la ruta
+// Importamos las rutas principales
 const rutasTransito = require('./routes/transito'); 
 const rutasDashboard = require('./routes/dashboard');
 const rutasUsuarios = require('./routes/usuarios');
 const rutasRecepcion = require('./routes/recepcion');
 const rutasIncidentes = require('./routes/incidentes');
+const rutasAuth = require('./routes/auth');
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -25,7 +26,8 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Usamos la ruta
+// Registro de rutas de la API
+app.use('/api/auth', rutasAuth);
 app.use('/api/formularios/transito', rutasTransito);
 app.use('/api/analitica/dashboard', rutasDashboard);
 app.use('/api/analitica/mapa', rutasMapa);

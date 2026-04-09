@@ -8,13 +8,47 @@ const Login = ({ onLogin }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Credenciales "hardcodeadas" para el prototipo
-    if (username === 'admin' && password === '1234') {
+
+    console.log('BOTON PRESIONADO. Datos de login enviados al backend:', username, password);
+
+    try {
+      const response = await fetch('http://localhost:3001/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: username,
+          password
+        })
+      });
+
+      if (!response.ok) {
+        let errorMessage = 'Error en la autenticación';
+        try {
+          const errorData = await response.json();
+          if (errorData && (errorData.message || errorData.error)) {
+            errorMessage = errorData.message || errorData.error;
+          }
+        } catch (_) {
+          // Si la respuesta no es JSON, mantenemos el mensaje genérico
+        }
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+
+      // Opcional: aquí se podría almacenar el token en localStorage o contexto
+      // localStorage.setItem('token', data.token);
+
+      setError(false);
       onLogin();
-    } else {
+    } catch (err) {
+      console.error('Error durante el login:', err);
       setError(true);
+      alert('Error: ' + (err.message || 'Error desconocido en el inicio de sesión'));
       setTimeout(() => setError(false), 3000);
     }
   };
