@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { UserPlus, Download, Edit, Trash2, Shield, UserCheck, UserX } from 'lucide-react';
+import { API_BASE } from '../config/api';
+import { formatearFechaBolivia } from '../utils/fechaBolivia';
 
 const Configuracion = () => {
   const [activeTab, setActiveTab] = useState('usuarios');
@@ -25,7 +27,7 @@ const Configuracion = () => {
   const fetchUsuarios = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:3001/api/usuarios');
+      const response = await axios.get(`${API_BASE}/usuarios`);
       setUsuarios(response.data);
     } catch (error) {
       console.error('Error al cargar usuarios:', error);
@@ -47,7 +49,7 @@ const Configuracion = () => {
     e.preventDefault();
     
     try {
-      const response = await axios.post('http://localhost:3001/api/usuarios', formData);
+      const response = await axios.post(`${API_BASE}/usuarios`, formData);
       alert('Usuario creado exitosamente');
       
       // Restablecer estado del formulario a valores iniciales
@@ -71,7 +73,7 @@ const Configuracion = () => {
     if (!window.confirm('¿Está seguro de desactivar este usuario?')) return;
     
     try {
-      await axios.put(`http://localhost:3001/api/usuarios/${id}`, { estado: 'inactivo' });
+      await axios.put(`${API_BASE}/usuarios/${id}`, { estado: 'inactivo' });
       alert('Usuario desactivado exitosamente');
       fetchUsuarios();
     } catch (error) {
@@ -84,7 +86,7 @@ const Configuracion = () => {
     if (!window.confirm('¿Está seguro de eliminar este usuario? Esta acción no se puede deshacer.')) return;
     
     try {
-      await axios.delete(`http://localhost:3001/api/usuarios/${id}`);
+      await axios.delete(`${API_BASE}/usuarios/${id}`);
       alert('Usuario eliminado exitosamente');
       fetchUsuarios();
     } catch (error) {
@@ -119,17 +121,7 @@ const Configuracion = () => {
     }
   };
 
-  const formatFecha = (fecha) => {
-    if (!fecha) return 'Nunca';
-    const date = new Date(fecha);
-    return date.toLocaleString('es-BO', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  const formatFecha = (fecha) => (fecha ? formatearFechaBolivia(fecha) : 'Nunca');
 
   return (
     <div className="min-h-screen bg-gray-100">

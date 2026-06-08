@@ -6,6 +6,7 @@ const cors = require('cors');
 // Importamos las rutas principales
 const rutasTransito = require('./routes/transito'); 
 const rutasDashboard = require('./routes/dashboard');
+const rutasDashboardEstadisticas = require('./routes/dashboardEstadisticas');
 const rutasUsuarios = require('./routes/usuarios');
 const rutasRecepcion = require('./routes/recepcion');
 const rutasIncidentes = require('./routes/incidentes');
@@ -30,10 +31,12 @@ app.use(express.json());
 app.use('/api/auth', rutasAuth);
 app.use('/api/formularios/transito', rutasTransito);
 app.use('/api/analitica/dashboard', rutasDashboard);
+app.use('/api/dashboard', rutasDashboardEstadisticas);
 app.use('/api/analitica/mapa', rutasMapa);
 app.use('/api/usuarios', rutasUsuarios);
 app.use('/api/recepcion', rutasRecepcion);
 app.use('/api/incidentes', rutasIncidentes);
+app.use('/api/formularios', require('./routes/formularios'));
 
 app.get('/', (req, res) => {
     res.send('API Policia Cochabamba Funcionando');
@@ -58,3 +61,5 @@ app.get('/api/analitica/mapa', async (req, res) => {
         res.status(500).json({ error: 'Error al obtener los datos del mapa' });
     }
 });
+
+

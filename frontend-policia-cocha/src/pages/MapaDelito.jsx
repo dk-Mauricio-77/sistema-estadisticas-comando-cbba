@@ -4,6 +4,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.heat';
 import axios from 'axios';
+import { API_BASE } from '../config/api';
 
 /**
  * Componente interno para renderizar la capa de heatmap
@@ -84,7 +85,7 @@ const MapaDelito = () => {
     const cargarPuntos = async () => {
       try {
         setLoading(true);
-        const res = await axios.get('http://localhost:3001/api/analitica/mapa');
+        const res = await axios.get(`${API_BASE}/analitica/mapa`);
         setPuntos(res.data || []);
       } catch (error) {
         console.error('Error cargando mapa:', error);

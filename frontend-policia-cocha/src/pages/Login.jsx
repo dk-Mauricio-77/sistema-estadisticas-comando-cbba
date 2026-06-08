@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { User, Lock, ShieldAlert } from 'lucide-react';
-// Importamos la imagen solo para el fondo
 import logoEscudo from '../assets/logo-login.png';
+import { API_BASE } from '../config/api';
 
 const Login = ({ onLogin }) => {
   const [username, setUsername] = useState('');
@@ -10,19 +10,13 @@ const Login = ({ onLogin }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     console.log('BOTON PRESIONADO. Datos de login enviados al backend:', username, password);
 
     try {
-      const response = await fetch('http://localhost:3001/api/auth/login', {
+      const response = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          email: username,
-          password
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: username, password })
       });
 
       if (!response.ok) {
@@ -32,53 +26,53 @@ const Login = ({ onLogin }) => {
           if (errorData && (errorData.message || errorData.error)) {
             errorMessage = errorData.message || errorData.error;
           }
-        } catch (_) {
-          // Si la respuesta no es JSON, mantenemos el mensaje genérico
-        }
+        } catch (_) {}
         throw new Error(errorMessage);
       }
 
       const data = await response.json();
+      console.log('Respuesta del backend:', data);
 
-      // Opcional: aquí se podría almacenar el token en localStorage o contexto
-      // localStorage.setItem('token', data.token);
+      // Guardar token para que otros módulos puedan usarlo
+      localStorage.setItem('token', data.token);
 
+      // Se pasa el objeto completo del usuario al App (incluye token y rol)
+      // Asegúrate que tu backend devuelva: { token, rol, nombre, ... }
       setError(false);
-      onLogin();
+      onLogin({
+        token: data.token,
+        rol: data.user.rol,       // 'Administrador' | 'Analista' | 'Operador'
+        nombre: data.user.nombre,
+        id: data.user.id,
+      });
+
     } catch (err) {
       console.error('Error durante el login:', err);
       setError(true);
-      alert('Error: ' + (err.message || 'Error desconocido en el inicio de sesión'));
       setTimeout(() => setError(false), 3000);
     }
   };
 
   return (
-    // Contenedor principal con la imagen de fondo
-    <div 
+    <div
       className="min-h-screen flex items-center justify-center p-4 bg-cover bg-center bg-no-repeat relative"
       style={{ backgroundImage: `url(${logoEscudo})` }}
     >
-      {/* Capa oscura superpuesta para mejorar la lectura (Overlay) */}
       <div className="absolute inset-0 bg-policia-dark/80 backdrop-blur-sm"></div>
 
-      {/* Tarjeta del Formulario (con z-10 para que quede encima de la capa oscura) */}
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative z-10">
-        {/* Encabezado SIN LOGO PEQUEÑO */}
         <div className="bg-gray-50 p-8 text-center border-b">
-          {/* Se eliminó la etiqueta <img> que estaba aquí */}
           <h1 className="text-2xl font-extrabold text-policia-green uppercase tracking-tight">Comando Departamental</h1>
           <p className="text-gray-500 text-sm mt-1">Sistema de Estadística y Planificación</p>
         </div>
 
-        {/* Formulario */}
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Usuario Oficial</label>
             <div className="relative">
               <User className="absolute left-3 top-3 text-gray-400" size={20} />
-              <input 
-                type="text" 
+              <input
+                type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="pl-10 w-full border-gray-300 rounded-lg shadow-sm focus:ring-policia-green focus:border-policia-green p-2.5 border"
@@ -92,8 +86,8 @@ const Login = ({ onLogin }) => {
             <label className="block text-sm font-medium text-gray-700 mb-2">Contraseña</label>
             <div className="relative">
               <Lock className="absolute left-3 top-3 text-gray-400" size={20} />
-              <input 
-                type="password" 
+              <input
+                type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="pl-10 w-full border-gray-300 rounded-lg shadow-sm focus:ring-policia-green focus:border-policia-green p-2.5 border"
@@ -109,10 +103,14 @@ const Login = ({ onLogin }) => {
             </div>
           )}
 
-          <button type="submit" className="w-full bg-policia-green hover:bg-[#004d35] text-white font-bold py-3 rounded-lg shadow-md transition-all active:scale-95">
+          <button
+            type="submit"
+            className="w-full bg-policia-green hover:bg-[#004d35] text-white font-bold py-3 rounded-lg shadow-md transition-all active:scale-95"
+          >
             INGRESAR AL SISTEMA
           </button>
         </form>
+
         <div className="bg-gray-50 p-4 text-center text-xs text-gray-500">
           © 2025 Policía Boliviana - Uso exclusivo autorizado
         </div>
