@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { MapPin, Calendar, Clock, FileText } from 'lucide-react';
 import { getFormConfig } from '../config/formsConfig';
 
 /**
- * Componente para renderizar formularios dinámicos basados en configuración
- * @param {Object} props
- * @param {string} props.formId - ID del formulario a renderizar
- * @param {Object} props.formData - Estado del formulario
- * @param {Function} props.onChange - Callback cuando cambia un campo
- * @param {Function} props.onMapSelect - Callback para seleccionar coordenadas en el mapa
+ * Renderiza formularios dinámicos a partir de la configuración en formsConfig.
+ * @param {Object}   props
+ * @param {string}   props.formId      - ID del formulario
+ * @param {Object}   props.formData    - Estado del formulario en el padre
+ * @param {Function} props.onChange    - Callback de cambio: (fieldId, value) => void
+ * @param {Function} props.onMapSelect - Callback para abrir MapPicker: (fieldId) => void
  */
 const DynamicFormRenderer = ({ formId, formData, onChange, onMapSelect }) => {
   const formConfig = getFormConfig(formId);
@@ -21,19 +21,33 @@ const DynamicFormRenderer = ({ formId, formData, onChange, onMapSelect }) => {
     );
   }
 
-  /**
-   * Maneja el cambio de valor en un campo
-   */
-  const handleFieldChange = (fieldId, value) => {
-    onChange(fieldId, value);
-  };
+  if (!formConfig.secciones || formConfig.secciones.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-12 text-center">
+        <FileText size={64} className="mx-auto mb-4 text-gray-300" />
+        <h2 className="text-xl font-bold text-gray-800 mb-2">Formulario en Configuración</h2>
+        <p className="text-gray-500">
+          El formulario <strong>{formConfig.codigo} - {formConfig.nombre}</strong> está registrado
+          pero aún no tiene campos configurados.
+        </p>
+        <p className="text-gray-400 text-sm mt-2">Contacte al administrador para configurar los campos.</p>
+      </div>
+    );
+  }
 
   /**
-   * Renderiza un campo individual según su tipo
+   * Renderiza cada campo según su tipo.
+   * CRÍTICO: todos los inputs tienen name={campo.id} para garantizar que el
+   * estado se sincronice correctamente y datos_especificos llegue completo al backend.
    */
   const renderField = (campo) => {
-    const value = formData[campo.id] || '';
+    const value    = formData[campo.id] ?? '';
     const fieldKey = `field-${campo.id}`;
+    const base     = {
+      id:       campo.id,
+      name:     campo.id,
+      required: campo.requerido,
+    };
 
     switch (campo.tipo) {
       case 'text':
@@ -41,11 +55,10 @@ const DynamicFormRenderer = ({ formId, formData, onChange, onMapSelect }) => {
           <input
             key={fieldKey}
             type="text"
-            id={campo.id}
+            {...base}
             value={value}
-            onChange={(e) => handleFieldChange(campo.id, e.target.value)}
+            onChange={(e) => onChange(campo.id, e.target.value)}
             placeholder={campo.placeholder || campo.label}
-            required={campo.requerido}
             className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-policia-green focus:border-policia-green outline-none transition-all"
           />
         );
@@ -55,11 +68,10 @@ const DynamicFormRenderer = ({ formId, formData, onChange, onMapSelect }) => {
           <input
             key={fieldKey}
             type="number"
-            id={campo.id}
+            {...base}
             value={value}
-            onChange={(e) => handleFieldChange(campo.id, e.target.value)}
+            onChange={(e) => onChange(campo.id, e.target.value)}
             placeholder={campo.placeholder || campo.label}
-            required={campo.requerido}
             min={campo.min}
             max={campo.max}
             step={campo.step || 1}
@@ -71,16 +83,13 @@ const DynamicFormRenderer = ({ formId, formData, onChange, onMapSelect }) => {
         return (
           <select
             key={fieldKey}
-            id={campo.id}
+            {...base}
             value={value}
-            onChange={(e) => handleFieldChange(campo.id, e.target.value)}
-            required={campo.requerido}
+            onChange={(e) => onChange(campo.id, e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-policia-green focus:border-policia-green outline-none transition-all bg-white"
           >
-            {campo.opciones.map((opcion) => (
-              <option key={opcion.value} value={opcion.value}>
-                {opcion.label}
-              </option>
+            {campo.opciones.map(opcion => (
+              <option key={opcion.value} value={opcion.value}>{opcion.label}</option>
             ))}
           </select>
         );
@@ -90,13 +99,12 @@ const DynamicFormRenderer = ({ formId, formData, onChange, onMapSelect }) => {
           <div key={fieldKey} className="relative">
             <input
               type="date"
-              id={campo.id}
+              {...base}
               value={value}
-              onChange={(e) => handleFieldChange(campo.id, e.target.value)}
-              required={campo.requerido}
+              onChange={(e) => onChange(campo.id, e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-policia-green focus:border-policia-green outline-none transition-all pr-12"
             />
-            <Calendar className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" size={20} />
+            <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={20} />
           </div>
         );
 
@@ -105,13 +113,12 @@ const DynamicFormRenderer = ({ formId, formData, onChange, onMapSelect }) => {
           <div key={fieldKey} className="relative">
             <input
               type="time"
-              id={campo.id}
+              {...base}
               value={value}
-              onChange={(e) => handleFieldChange(campo.id, e.target.value)}
-              required={campo.requerido}
+              onChange={(e) => onChange(campo.id, e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-policia-green focus:border-policia-green outline-none transition-all pr-12"
             />
-            <Clock className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" size={20} />
+            <Clock className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={20} />
           </div>
         );
 
@@ -119,11 +126,10 @@ const DynamicFormRenderer = ({ formId, formData, onChange, onMapSelect }) => {
         return (
           <textarea
             key={fieldKey}
-            id={campo.id}
+            {...base}
             value={value}
-            onChange={(e) => handleFieldChange(campo.id, e.target.value)}
+            onChange={(e) => onChange(campo.id, e.target.value)}
             placeholder={campo.placeholder || campo.label}
-            required={campo.requerido}
             rows={campo.rows || 4}
             className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-policia-green focus:border-policia-green outline-none transition-all resize-none"
           />
@@ -136,9 +142,12 @@ const DynamicFormRenderer = ({ formId, formData, onChange, onMapSelect }) => {
               <input
                 type="text"
                 id={`${campo.id}_display`}
-                value={formData[`${campo.id}_lat`] && formData[`${campo.id}_lng`] 
-                  ? `${formData[`${campo.id}_lat`]}, ${formData[`${campo.id}_lng`]}`
-                  : ''}
+                name={`${campo.id}_display`}
+                value={
+                  formData[`${campo.id}_lat`] && formData[`${campo.id}_lng`]
+                    ? `${formData[`${campo.id}_lat`]}, ${formData[`${campo.id}_lng`]}`
+                    : ''
+                }
                 placeholder="Latitud, Longitud"
                 readOnly
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-xl bg-gray-50 text-gray-600 cursor-not-allowed"
@@ -155,16 +164,9 @@ const DynamicFormRenderer = ({ formId, formData, onChange, onMapSelect }) => {
             {campo.descripcion && (
               <p className="text-xs text-gray-500">{campo.descripcion}</p>
             )}
-            <input
-              type="hidden"
-              id={`${campo.id}_lat`}
-              value={formData[`${campo.id}_lat`] || ''}
-            />
-            <input
-              type="hidden"
-              id={`${campo.id}_lng`}
-              value={formData[`${campo.id}_lng`] || ''}
-            />
+            {/* Ocultos para persistencia en formData — las coordenadas van a gps_latitud/gps_longitud */}
+            <input type="hidden" name={`${campo.id}_lat`} value={formData[`${campo.id}_lat`] || ''} />
+            <input type="hidden" name={`${campo.id}_lng`} value={formData[`${campo.id}_lng`] || ''} />
           </div>
         );
 
@@ -177,38 +179,18 @@ const DynamicFormRenderer = ({ formId, formData, onChange, onMapSelect }) => {
     }
   };
 
-  // Si el formulario no tiene secciones configuradas, mostrar mensaje
-  if (!formConfig.secciones || formConfig.secciones.length === 0) {
-    return (
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-12 text-center">
-        <FileText size={64} className="mx-auto mb-4 text-gray-300" />
-        <h2 className="text-xl font-bold text-gray-800 mb-2">Formulario en Configuración</h2>
-        <p className="text-gray-500">
-          El formulario <strong>{formConfig.codigo} - {formConfig.nombre}</strong> está registrado en el sistema pero aún no tiene campos configurados.
-        </p>
-        <p className="text-gray-400 text-sm mt-2">Contacte al administrador para configurar los campos de este formulario.</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-8">
-      {formConfig.secciones.map((seccion) => (
-        <div
-          key={seccion.id}
-          className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6"
-        >
+      {formConfig.secciones.map(seccion => (
+        <div key={seccion.id} className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-xl font-bold text-policia-green mb-6 border-b border-gray-200 pb-3">
             {seccion.titulo}
           </h3>
           {seccion.campos && seccion.campos.length > 0 ? (
             <div className={`grid grid-cols-1 ${seccion.campos[0]?.gridCols || 'md:grid-cols-2'} gap-4`}>
-              {seccion.campos.map((campo) => (
-                <div key={campo.id} className={campo.gridCols ? `col-span-full md:col-span-1` : ''}>
-                  <label
-                    htmlFor={campo.id}
-                    className="block text-sm font-semibold text-gray-700 mb-2"
-                  >
+              {seccion.campos.map(campo => (
+                <div key={campo.id} className={campo.gridCols ? 'col-span-full md:col-span-1' : ''}>
+                  <label htmlFor={campo.id} className="block text-sm font-semibold text-gray-700 mb-2">
                     {campo.label}
                     {campo.requerido && <span className="text-red-500 ml-1">*</span>}
                   </label>

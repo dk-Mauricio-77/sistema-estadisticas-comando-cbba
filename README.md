@@ -28,3 +28,9 @@ Una vez ejecutado el backend y frontedn, ingresar al sistema con las siguientes 
 
 * **Correo/Usuario:** admin
 * **Contraseña:** 1234
+
+* **Correo/Usuario(analista):** Sgto.SegundoMontano@gmail.com
+* **Contraseña:** analista231
+
+* **Correo/Usuario(operador):** Morales@policia.gov.bo
+* **Contraseña:** operador231

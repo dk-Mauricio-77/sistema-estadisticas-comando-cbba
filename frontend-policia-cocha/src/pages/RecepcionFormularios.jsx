@@ -3,7 +3,6 @@ import axios from 'axios';
 import { FileText, Clock, CheckCircle, User, Building2, Calendar } from 'lucide-react';
 import { getAllForms } from '../config/formsConfig';
 import { API_BASE } from '../config/api';
-import { formatearFechaBolivia, formatearHoraBolivia, horaActualBolivia, construirTimestampBolivia } from '../utils/fechaBolivia';
 
 const UNIDADES = [
   'Comando Departamental',
@@ -18,6 +17,59 @@ const UNIDADES = [
   'Unidad de Investigación',
 ];
 
+const TZ_BOLIVIA = 'America/La_Paz';
+
+/** Hora actual Bolivia (HH:MM) — sin helpers externos */
+const horaActualBolivia = () =>
+  new Date().toLocaleTimeString('es-BO', {
+    timeZone: TZ_BOLIVIA,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+
+/** Fecha actual Bolivia (YYYY-MM-DD) */
+const fechaHoyBolivia = () =>
+  new Intl.DateTimeFormat('en-CA', { timeZone: TZ_BOLIVIA }).format(new Date());
+
+/**
+ * Extrae HH:MM de un timestamp almacenado sin zona (PostgreSQL timestamp without time zone).
+ * Evita new Date() que re-aplica offset y suma 4 horas de más.
+ */
+const extraerHoraLocal = (valor) => {
+  if (!valor) return '—';
+  const s = String(valor);
+  if (/^\d{2}:\d{2}$/.test(s)) return s;
+  const m = s.match(/(?:T|\s)(\d{2}):(\d{2})/);
+  if (m) return `${m[1]}:${m[2]}`;
+  const m2 = s.match(/^(\d{2}):(\d{2})/);
+  return m2 ? `${m2[1]}:${m2[2]}` : '—';
+};
+
+const formatearHora = (valor) => extraerHoraLocal(valor);
+
+const formatearFecha = (valor) => {
+  if (!valor) return '—';
+  const s = String(valor);
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+  return new Date(valor).toLocaleDateString('es-BO', {
+    timeZone: TZ_BOLIVIA,
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+};
+
+/**
+ * Combina fecha+hora Bolivia en string local para PostgreSQL (timestamp without time zone).
+ * NO usa toISOString() ni new Date() con offset — la hora ingresada se guarda tal cual.
+ */
+const combinarFechaHoraBolivia = (horaLocal) => {
+  const [hh, mm] = (horaLocal || '00:00').split(':');
+  return `${fechaHoyBolivia()} ${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:00`;
+};
+
 const RecepcionFormularios = () => {
   const [formData, setFormData] = useState({
     entregado_por:      '',
@@ -31,15 +83,11 @@ const RecepcionFormularios = () => {
   const [loading, setLoading]                     = useState(false);
   const [submitting, setSubmitting]               = useState(false);
 
-  // Lista dinámica — misma fuente que CargaDatos
   const tiposFormulario = getAllForms();
 
   useEffect(() => {
     fetchEntregasRecientes();
-    setFormData(prev => ({
-      ...prev,
-      fecha_hora_llegada: horaActualBolivia(),
-    }));
+    setFormData(prev => ({ ...prev, fecha_hora_llegada: horaActualBolivia() }));
   }, []);
 
   const fetchEntregasRecientes = async () => {
@@ -68,11 +116,11 @@ const RecepcionFormularios = () => {
 
     try {
       setSubmitting(true);
-      const fechaCompleta = construirTimestampBolivia(formData.fecha_hora_llegada);
+      const fechaHoraLocal = combinarFechaHoraBolivia(formData.fecha_hora_llegada);
 
       await axios.post(`${API_BASE}/recepcion`, {
         ...formData,
-        fecha_hora_llegada: fechaCompleta.toISOString(),
+        fecha_hora_llegada: fechaHoraLocal,
         oficial_receptor_id: null,
       });
 
@@ -93,7 +141,6 @@ const RecepcionFormularios = () => {
       setSubmitting(false);
     }
   };
-
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -123,8 +170,12 @@ const RecepcionFormularios = () => {
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Entregado por *</label>
                 <input
-                  type="text" name="entregado_por" value={formData.entregado_por}
-                  onChange={handleInputChange} placeholder="Nombre del oficial" required
+                  type="text"
+                  name="entregado_por"
+                  value={formData.entregado_por}
+                  onChange={handleInputChange}
+                  placeholder="Nombre del oficial"
+                  required
                   className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-policia-green focus:border-policia-green outline-none transition-all"
                 />
               </div>
@@ -132,8 +183,10 @@ const RecepcionFormularios = () => {
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Unidad *</label>
                 <select
-                  name="unidad_policial" value={formData.unidad_policial}
-                  onChange={handleInputChange} required
+                  name="unidad_policial"
+                  value={formData.unidad_policial}
+                  onChange={handleInputChange}
+                  required
                   className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-policia-green outline-none bg-white"
                 >
                   <option value="">Seleccionar unidad</option>
@@ -141,12 +194,13 @@ const RecepcionFormularios = () => {
                 </select>
               </div>
 
-              {/* Select dinámico — misma fuente que CargaDatos */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Tipo de Formulario *</label>
                 <select
-                  name="tipo_formulario" value={formData.tipo_formulario}
-                  onChange={handleInputChange} required
+                  name="tipo_formulario"
+                  value={formData.tipo_formulario}
+                  onChange={handleInputChange}
+                  required
                   className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-policia-green outline-none bg-white"
                 >
                   <option value="">Tipo de formulario</option>
@@ -162,7 +216,9 @@ const RecepcionFormularios = () => {
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Hora de llegada</label>
                 <div className="relative">
                   <input
-                    type="time" name="fecha_hora_llegada" value={formData.fecha_hora_llegada}
+                    type="time"
+                    name="fecha_hora_llegada"
+                    value={formData.fecha_hora_llegada}
                     onChange={handleInputChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-policia-green outline-none pr-12"
                   />
@@ -172,7 +228,10 @@ const RecepcionFormularios = () => {
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Oficial que recibe</label>
-                <input type="text" value="Guardia Central" readOnly
+                <input
+                  type="text"
+                  value="Guardia Central"
+                  readOnly
                   className="w-full px-4 py-2 border border-gray-300 rounded-xl bg-gray-50 text-gray-600 cursor-not-allowed"
                 />
               </div>
@@ -180,7 +239,8 @@ const RecepcionFormularios = () => {
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Observaciones</label>
                 <textarea
-                  name="observaciones" value={formData.observaciones}
+                  name="observaciones"
+                  value={formData.observaciones}
                   onChange={handleInputChange}
                   placeholder="Observaciones adicionales (opcional)"
                   rows="3"
@@ -188,7 +248,9 @@ const RecepcionFormularios = () => {
                 />
               </div>
 
-              <button type="submit" disabled={submitting}
+              <button
+                type="submit"
+                disabled={submitting}
                 className="w-full bg-policia-green text-white py-3 rounded-xl font-bold hover:bg-policia-dark transition-colors shadow-lg shadow-green-900/20 flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {submitting
@@ -224,13 +286,13 @@ const RecepcionFormularios = () => {
                       <span className="px-2 py-1 rounded-md text-xs font-bold bg-green-100 text-green-700 border border-green-200">
                         {entrega.estado === 'recibido' ? 'Recibido' : entrega.estado}
                       </span>
-                      <span className="text-xs text-gray-500">{formatearHoraBolivia(entrega.fecha_hora_llegada)}</span>
+                      <span className="text-xs text-gray-500">{formatearHora(entrega.fecha_hora_llegada)}</span>
                     </div>
                     <h3 className="font-bold text-gray-800 text-lg mb-1">{entrega.tipo_formulario}</h3>
                     <div className="space-y-1 text-sm text-gray-600">
                       <div className="flex items-center gap-2"><User size={16} className="text-gray-400" /><span>{entrega.entregado_por}</span></div>
                       <div className="flex items-center gap-2"><Building2 size={16} className="text-gray-400" /><span>{entrega.unidad_policial}</span></div>
-                      <div className="flex items-center gap-2"><Calendar size={16} className="text-gray-400" /><span>{formatearFechaBolivia(entrega.fecha_hora_llegada)}</span></div>
+                      <div className="flex items-center gap-2"><Calendar size={16} className="text-gray-400" /><span>{formatearFecha(entrega.fecha_hora_llegada)}</span></div>
                     </div>
                     {entrega.observaciones && (
                       <p className="text-xs text-gray-500 mt-2 italic">"{entrega.observaciones}"</p>
